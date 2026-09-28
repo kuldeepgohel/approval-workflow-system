@@ -22,5 +22,12 @@ public class RequestDTO {
 
     private String departmentName;
 
+    @NotNull(message = "Approval workflow is required.")
+    private Long workflowId;
+
+    private String workflowName;
+
+    private Integer currentLevel;
+
     private RequestStatus status;
 }

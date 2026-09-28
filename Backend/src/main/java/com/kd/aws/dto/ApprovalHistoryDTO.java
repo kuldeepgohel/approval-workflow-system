@@ -1,7 +1,6 @@
 package com.kd.aws.dto;
 
 import com.kd.aws.enums.ApprovalAction;
-import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,11 +12,13 @@ public class ApprovalHistoryDTO {
 
     private Long requestId;
 
+    private Integer level;
+
     private ApprovalAction action;
 
     private String comments;
 
-    private String approvedBy;
+    private String actionBy;
 
     private LocalDateTime actionDate;
 }
