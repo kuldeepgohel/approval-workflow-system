@@ -64,7 +64,6 @@ public class RequestService {
         request.setStatus(RequestStatus.PENDING);
 
         Request savedRequest = requestRepository.save(request);
-
         return requestMapper.mapToDTO(savedRequest);
     }
 
@@ -129,6 +128,7 @@ public class RequestService {
 
             request.setDepartment(department);
         }
+
         Request updatedRequest = requestRepository.save(request);
 
         return requestMapper.mapToDTO(updatedRequest);
