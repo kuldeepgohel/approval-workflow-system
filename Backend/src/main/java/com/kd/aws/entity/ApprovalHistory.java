@@ -1,14 +1,13 @@
 package com.kd.aws.entity;
 
 import com.kd.aws.enums.ApprovalAction;
-import com.kd.aws.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "approvalHistory")
+@Table(name = "approval_history")
 @Data
 public class ApprovalHistory {
 
@@ -28,7 +27,10 @@ public class ApprovalHistory {
     private String comments;
 
     @Column(nullable = false)
-    private String approvedBy;
+    private String actionBy;
+
+    @Column(nullable = false)
+    private Integer level;
 
     @Column(nullable = false,updatable = false)
     private LocalDateTime actionDate;

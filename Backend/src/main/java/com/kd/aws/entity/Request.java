@@ -22,7 +22,7 @@ public class Request {
     private String description;
 
     @Column(nullable = false)
-    private String requesterBy;
+    private String requestedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
@@ -31,6 +31,13 @@ public class Request {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RequestStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id", nullable = false)
+    private ApprovalWorkflow workflow;
+
+    @Column(nullable = false)
+    private Integer currentLevel;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -45,6 +52,10 @@ public class Request {
 
         if(status == null){
             status = RequestStatus.PENDING;
+        }
+
+        if(currentLevel == null) {
+            currentLevel = 1;
         }
     }
 
