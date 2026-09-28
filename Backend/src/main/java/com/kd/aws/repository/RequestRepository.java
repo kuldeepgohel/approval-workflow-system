@@ -14,5 +14,9 @@ public interface RequestRepository extends JpaRepository<Request,Long> {
 //
 //    List<Request> findByDepartmentId(Long departmentId);
 
+    List<Request> findByStatusAndCurrentLevel( RequestStatus status, Integer currentLevel);
 
+    List<Request> findByWorkflowId(Long workflowId);
+
+    List<Request> findByWorkflowIdAndStatusAndCurrentLevel( Long workflowId, RequestStatus status, Integer currentLevel );
 }
