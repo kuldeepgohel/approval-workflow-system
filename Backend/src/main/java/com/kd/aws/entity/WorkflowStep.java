@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "workflow_steps")
+@Table(name = "workflow_steps", uniqueConstraints = {
+        @UniqueConstraint(
+                columnNames = {"workflow_id","level"}
+        )
+})
 @Data
 public class WorkflowStep {
 
