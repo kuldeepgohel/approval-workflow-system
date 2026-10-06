@@ -12,6 +12,7 @@ import com.kd.aws.repository.DepartmentRepository;
 import com.kd.aws.repository.RoleRepository;
 import com.kd.aws.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class UserService {
     private final DepartmentRepository departmentRepository;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(CreateUserRequest request) {
 
@@ -45,6 +47,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setDepartment(department);
         user.setRole(role);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(true);
 
         user = userRepository.save(user);
