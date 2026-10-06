@@ -1,5 +1,6 @@
 package com.kd.aws.dto.user;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,9 @@ public class CreateUserRequest {
     @Email(message = "Invalid email format")
     @Size(max = 150, message = "Email cannot exceed 150 characters")
     private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     @NotNull(message = "Department ID is required")
     private Long departmentId;
