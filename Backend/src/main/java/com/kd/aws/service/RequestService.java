@@ -11,6 +11,8 @@ import com.kd.aws.exception.ResourceNotFoundException;
 import com.kd.aws.mapper.RequestMapper;
 import com.kd.aws.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -150,6 +152,9 @@ public class RequestService {
      */
     @Transactional
     public RequestDTO approveRequest(Long requestId, ApprovalRequestDTO approvalRequestDTO){
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: "+ requestId));
         if (request.getStatus() != RequestStatus.PENDING){
@@ -165,20 +170,21 @@ public class RequestService {
                 currentLevel
         );
 //        Find the user who is trying to approve the request.
-        User approver = getApprover(
-                approvalRequestDTO.getActionBy()
+        User approver = userRepository.findByEmail(
+                email
+        ).orElseThrow(
+                () -> new ResourceNotFoundException("User not found with email: " + email)
         );
-/**
- * Verify that the user's role matches the role
- * configured for the current workflow level.
- */
+    /**
+     * Verify that the user's role matches the role
+     * configured for the current workflow level.
+     */
         validateApproverRole(approver, currentStep, request);
-//        request.setStatus(RequestStatus.APPROVED);
         ApprovalHistory history = new ApprovalHistory();
 
         history.setRequest(request);
         history.setLevel(currentLevel);
-        history.setActionBy(approvalRequestDTO.getActionBy());
+        history.setActionBy(email);
         history.setAction(ApprovalAction.APPROVED);
         history.setComments(approvalRequestDTO.getComments());
 
@@ -208,6 +214,9 @@ public class RequestService {
      * @return
      */
     public RequestDTO rejectRequest(Long requestId, ApprovalRequestDTO approvalRequestDTO){
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: "+ requestId));
         if (request.getStatus() != RequestStatus.PENDING){
@@ -221,8 +230,10 @@ public class RequestService {
                 request.getWorkflow().getId(),
                 currentLevel
         );
-        User approver = getApprover(
-                approvalRequestDTO.getActionBy()
+        User approver = userRepository.findByEmail(
+                email
+        ).orElseThrow(
+                () -> new ResourceNotFoundException("User not found with email: " + email)
         );
         validateApproverRole(approver, currentStep, request);
 
@@ -230,7 +241,7 @@ public class RequestService {
 
         history.setRequest(request);
         history.setLevel(currentLevel);
-        history.setActionBy(approvalRequestDTO.getActionBy());
+        history.setActionBy(email);
         history.setAction(ApprovalAction.REJECTED);
         history.setComments(approvalRequestDTO.getComments());
 
@@ -324,15 +335,6 @@ public class RequestService {
                 );
     }
 
-    private User getApprover(String email) {
-        return userRepository.
-                findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User not found with email:" + email
-                        )
-                );
-    }
 
     private void validateApproverRole(
             User approver,
