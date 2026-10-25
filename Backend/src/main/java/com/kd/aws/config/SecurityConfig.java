@@ -57,6 +57,16 @@ public class SecurityConfig {
                                     );
                                 }
                         )
+                                .accessDeniedHandler(((request, response, accessDeniedException) -> {
+                                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                    response.setContentType("application/json");
+                                    response.getWriter().write("""
+                                            { 
+                                                "status": 403,
+                                                "message": "You do not have permission to perform this action."
+                                            }
+                                            """);
+                                }))
                 ).addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
