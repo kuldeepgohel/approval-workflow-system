@@ -14,4 +14,5 @@ public interface ApprovalHistoryRepository extends JpaRepository<ApprovalHistory
 
     Optional<ApprovalHistory> findFirstByRequestIdAndLevelOrderByActionDateDesc(
             Long requestId, Integer level );
+    boolean existsByRequestId(Long requestId);
 }

@@ -14,7 +14,6 @@ public class RequestDTO {
 
     private String description;
 
-    @NotBlank(message = "Requester name is required.")
     private String requestedBy;
 
     @NotNull(message = "Department is required.")
