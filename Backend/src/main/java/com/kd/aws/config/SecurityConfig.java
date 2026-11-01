@@ -14,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity
@@ -60,12 +63,19 @@ public class SecurityConfig {
                                 .accessDeniedHandler(((request, response, accessDeniedException) -> {
                                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                                     response.setContentType("application/json");
-                                    response.getWriter().write("""
-                                            { 
-                                                "status": 403,
-                                                "message": "You do not have permission to perform this action."
-                                            }
-                                            """);
+                                    String message = accessDeniedException.getMessage();
+
+                                    if(message == null || message.isBlank()){
+                                        message = "You do not have permission to perform this action.";
+                                    }
+                                    response.getWriter().write(
+                                            new ObjectMapper().writeValueAsString(
+                                                            Map.of(
+                                                                    "status", 403,
+                                                                    "message", message
+                                                            )
+                                                    )
+                                    );
                                 }))
                 ).addFilterBefore(
                         jwtAuthenticationFilter,

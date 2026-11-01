@@ -7,8 +7,11 @@ import com.kd.aws.dto.request.UpdateRequestRequest;
 import com.kd.aws.service.RequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +24,8 @@ public class RequestController {
     private final RequestService requestService;
 
     @GetMapping
-    public ResponseEntity<List<RequestDTO>> getAllRequests() {
-        return ResponseEntity.ok(requestService.getAllRequest());
+    public ResponseEntity<Page<RequestDTO>> getAllRequests(Pageable pageable) {
+        return ResponseEntity.ok(requestService.getAllRequest(pageable));
     }
 
     @GetMapping("/{id}")
@@ -47,6 +50,7 @@ public class RequestController {
         return ResponseEntity.ok(requestService.updateRequest(id, requestDTO));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRequest(@PathVariable Long id) {
 
