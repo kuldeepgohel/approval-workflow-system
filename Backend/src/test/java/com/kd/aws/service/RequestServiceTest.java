@@ -962,20 +962,34 @@ class RequestServiceTest {
 
         authenticateAs(ADMIN_EMAIL, "ROLE_ADMIN");
 
+        Pageable pageable = PageRequest.of(0, 10);
         ApprovalHistory history = createHistory();
+
+        Page<ApprovalHistory> historyPage =
+                new PageImpl<>(List.of(history), pageable, 1);
 
         when(requestRepository.findById(500L))
                 .thenReturn(Optional.of(request));
 
-        when(approvalHistoryRepository.findByRequestIdOrderByActionDateAsc(500L))
-                .thenReturn(List.of(history));
+        when(approvalHistoryRepository
+                .findByRequestIdOrderByActionDateAsc(500L, pageable))
+                .thenReturn(historyPage);
 
-        List<ApprovalHistoryDTO> result =
-                requestService.getApprovalHistory(500L);
+        Page<ApprovalHistoryDTO> result =
+                requestService.getApprovalHistory(500L, pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getAction()).isEqualTo(ApprovalAction.APPROVED);
-        assertThat(result.get(0).getActionBy()).isEqualTo(MANAGER_EMAIL);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getContent().get(0).getAction())
+                .isEqualTo(ApprovalAction.APPROVED);
+        assertThat(result.getContent().get(0).getActionBy())
+                .isEqualTo(MANAGER_EMAIL);
+
+        verify(approvalHistoryRepository)
+                .findByRequestIdOrderByActionDateAsc(500L, pageable);
 
         verify(userRepository, never()).findByEmail(anyString());
     }
@@ -985,18 +999,24 @@ class RequestServiceTest {
 
         authenticateAs(OWNER_EMAIL, "ROLE_USER");
 
+        Pageable pageable = PageRequest.of(0, 10);
         ApprovalHistory history = createHistory();
+
+        Page<ApprovalHistory> historyPage =
+                new PageImpl<>(List.of(history), pageable, 1);
 
         when(requestRepository.findById(500L))
                 .thenReturn(Optional.of(request));
 
-        when(approvalHistoryRepository.findByRequestIdOrderByActionDateAsc(500L))
-                .thenReturn(List.of(history));
+        when(approvalHistoryRepository
+                .findByRequestIdOrderByActionDateAsc(500L, pageable))
+                .thenReturn(historyPage);
 
-        List<ApprovalHistoryDTO> result =
-                requestService.getApprovalHistory(500L);
+        Page<ApprovalHistoryDTO> result =
+                requestService.getApprovalHistory(500L, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(1);
 
         verify(userRepository, never()).findByEmail(anyString());
     }
@@ -1006,7 +1026,11 @@ class RequestServiceTest {
 
         authenticateAs(MANAGER_EMAIL, "ROLE_Manager");
 
+        Pageable pageable = PageRequest.of(0, 10);
         ApprovalHistory history = createHistory();
+
+        Page<ApprovalHistory> historyPage =
+                new PageImpl<>(List.of(history), pageable, 1);
 
         when(requestRepository.findById(500L))
                 .thenReturn(Optional.of(request));
@@ -1017,13 +1041,71 @@ class RequestServiceTest {
         when(workflowStepRepository.findByWorkflowIdAndLevel(100L, 1))
                 .thenReturn(Optional.of(firstStep));
 
-        when(approvalHistoryRepository.findByRequestIdOrderByActionDateAsc(500L))
-                .thenReturn(List.of(history));
+        when(approvalHistoryRepository
+                .findByRequestIdOrderByActionDateAsc(500L, pageable))
+                .thenReturn(historyPage);
 
-        List<ApprovalHistoryDTO> result =
-                requestService.getApprovalHistory(500L);
+        Page<ApprovalHistoryDTO> result =
+                requestService.getApprovalHistory(500L, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+    }
+
+    @Test
+    void getApprovalHistory_shouldSupportPagination() {
+
+        authenticateAs(ADMIN_EMAIL, "ROLE_ADMIN");
+
+        Pageable pageable = PageRequest.of(1, 5);
+        ApprovalHistory history = createHistory();
+
+        Page<ApprovalHistory> historyPage =
+                new PageImpl<>(List.of(history), pageable, 11);
+
+        when(requestRepository.findById(500L))
+                .thenReturn(Optional.of(request));
+
+        when(approvalHistoryRepository
+                .findByRequestIdOrderByActionDateAsc(500L, pageable))
+                .thenReturn(historyPage);
+
+        Page<ApprovalHistoryDTO> result =
+                requestService.getApprovalHistory(500L, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getNumber()).isEqualTo(1);
+        assertThat(result.getSize()).isEqualTo(5);
+        assertThat(result.getTotalElements()).isEqualTo(11);
+        assertThat(result.getTotalPages()).isEqualTo(3);
+
+        verify(approvalHistoryRepository)
+                .findByRequestIdOrderByActionDateAsc(500L, pageable);
+    }
+
+    @Test
+    void getApprovalHistory_shouldReturnEmptyPageWhenNoHistoryExists() {
+
+        authenticateAs(ADMIN_EMAIL, "ROLE_ADMIN");
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<ApprovalHistory> emptyPage =
+                Page.empty(pageable);
+
+        when(requestRepository.findById(500L))
+                .thenReturn(Optional.of(request));
+
+        when(approvalHistoryRepository
+                .findByRequestIdOrderByActionDateAsc(500L, pageable))
+                .thenReturn(emptyPage);
+
+        Page<ApprovalHistoryDTO> result =
+                requestService.getApprovalHistory(500L, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getTotalPages()).isZero();
     }
 
     @Test
@@ -1038,6 +1120,8 @@ class RequestServiceTest {
         otherUser.setRole(adminRole);
         otherUser.setActive(true);
 
+        Pageable pageable = PageRequest.of(0, 10);
+
         when(requestRepository.findById(500L))
                 .thenReturn(Optional.of(request));
 
@@ -1049,23 +1133,32 @@ class RequestServiceTest {
 
         assertThrows(
                 AccessDeniedException.class,
-                () -> requestService.getApprovalHistory(500L)
+                () -> requestService.getApprovalHistory(500L, pageable)
         );
 
         verify(approvalHistoryRepository, never())
-                .findByRequestIdOrderByActionDateAsc(any());
+                .findByRequestIdOrderByActionDateAsc(
+                        anyLong(), any(Pageable.class)
+                );
     }
 
     @Test
     void getApprovalHistory_shouldThrowExceptionWhenRequestNotFound() {
+
+        Pageable pageable = PageRequest.of(0, 10);
 
         when(requestRepository.findById(500L))
                 .thenReturn(Optional.empty());
 
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> requestService.getApprovalHistory(500L)
+                () -> requestService.getApprovalHistory(500L, pageable)
         );
+
+        verify(approvalHistoryRepository, never())
+                .findByRequestIdOrderByActionDateAsc(
+                        anyLong(), any(Pageable.class)
+                );
     }
 
     // ================================================

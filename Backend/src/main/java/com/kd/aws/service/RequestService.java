@@ -337,7 +337,7 @@ public class RequestService {
      * @return
      */
     @Transactional(readOnly = true)
-    public List<ApprovalHistoryDTO> getApprovalHistory(Long requestId){
+    public Page<ApprovalHistoryDTO> getApprovalHistory(Long requestId, Pageable pageable){
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -377,11 +377,8 @@ public class RequestService {
             }
         }
         return approvalHistoryRepository
-                .findByRequestIdOrderByActionDateAsc(requestId)
-                .stream()
-                .map(this::mapToApprovalHistoryDTO)
-                .toList();
-
+                .findByRequestIdOrderByActionDateAsc(requestId,pageable)
+                .map(this::mapToApprovalHistoryDTO);
     }
 
     /**

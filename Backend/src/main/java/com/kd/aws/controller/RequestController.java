@@ -76,9 +76,9 @@ public class RequestController {
     }
 
     @GetMapping("/{id}/history")
-    public ResponseEntity<List<ApprovalHistoryDTO>> getApprovalHistory(
-            @PathVariable Long id) {
+    public ResponseEntity<Page<ApprovalHistoryDTO>> getApprovalHistory(
+            @PathVariable Long id, Pageable pageable) {
 
-        return ResponseEntity.ok(requestService.getApprovalHistory(id));
+        return ResponseEntity.ok(requestService.getApprovalHistory(id, pageable));
     }
 }
