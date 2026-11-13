@@ -16,6 +16,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -27,12 +31,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -49,7 +51,6 @@ class UserControllerTest {
 
     private LocalValidatorFactoryBean validator;
 
-
     @BeforeEach
     void setUp() {
 
@@ -65,9 +66,8 @@ class UserControllerTest {
                 .build();
     }
 
-
     // --------------------------------------------------
-    // Common test data
+    // COMMON TEST DATA
     // --------------------------------------------------
 
     private UserResponse createUserResponse() {
@@ -81,6 +81,16 @@ class UserControllerTest {
         return response;
     }
 
+    private UserResponse createSecondUserResponse() {
+
+        UserResponse response = new UserResponse();
+
+        response.setId(2L);
+        response.setName("Second User");
+        response.setEmail("second@gmail.com");
+
+        return response;
+    }
 
     // --------------------------------------------------
     // POST /api/users
@@ -111,42 +121,150 @@ class UserControllerTest {
         verify(userService).createUser(any(CreateUserRequest.class));
     }
 
-
     // --------------------------------------------------
-    // GET /api/users
+    // GET /api/users - PAGINATION
     // --------------------------------------------------
 
     @Test
     void getAllUsers_shouldReturn200() throws Exception {
 
-        when(userService.getAllUsers())
-                .thenReturn(List.of(createUserResponse()));
+        Pageable pageable = PageRequest.of(0, 10);
 
-        mockMvc.perform(get("/api/users"))
+        Page<UserResponse> userPage = new PageImpl<>(
+                List.of(createUserResponse()),
+                pageable,
+                1
+        );
+
+        when(userService.getAllUsers(any(Pageable.class)))
+                .thenReturn(userPage);
+
+        mockMvc.perform(get("/api/users")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Test User"))
-                .andExpect(jsonPath("$[0].email").value("test@gmail.com"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Test User"))
+                .andExpect(jsonPath("$.content[0].email").value("test@gmail.com"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
 
-        verify(userService).getAllUsers();
+        verify(userService).getAllUsers(any(Pageable.class));
     }
-
 
     @Test
-    void getAllUsers_whenEmpty_shouldReturnEmptyList() throws Exception {
+    void getAllUsers_whenEmpty_shouldReturnEmptyPage() throws Exception {
 
-        when(userService.getAllUsers())
-                .thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
 
-        mockMvc.perform(get("/api/users"))
+        Page<UserResponse> emptyPage = Page.empty(pageable);
+
+        when(userService.getAllUsers(any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/users")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.number").value(0));
 
-        verify(userService).getAllUsers();
+        verify(userService).getAllUsers(any(Pageable.class));
     }
 
+    // --------------------------------------------------
+    // GET /api/users - SORTING
+    // --------------------------------------------------
+
+    @Test
+    void getAllUsers_shouldSupportSorting() throws Exception {
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<UserResponse> userPage = new PageImpl<>(
+                List.of(createUserResponse()),
+                pageable,
+                1
+        );
+
+        when(userService.getAllUsers(any(Pageable.class)))
+                .thenReturn(userPage);
+
+        mockMvc.perform(get("/api/users")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "id,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(userService).getAllUsers(any(Pageable.class));
+    }
+
+    @Test
+    void getAllUsers_shouldSupportAscendingSorting() throws Exception {
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<UserResponse> userPage = new PageImpl<>(
+                List.of(createUserResponse()),
+                pageable,
+                1
+        );
+
+        when(userService.getAllUsers(any(Pageable.class)))
+                .thenReturn(userPage);
+
+        mockMvc.perform(get("/api/users")
+                        .param("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("Test User"));
+
+        verify(userService).getAllUsers(any(Pageable.class));
+    }
+
+    // --------------------------------------------------
+    // GET /api/users - PAGE NAVIGATION
+    // --------------------------------------------------
+
+    @Test
+    void getAllUsers_shouldReturnRequestedPage() throws Exception {
+
+        Pageable pageable = PageRequest.of(1, 1);
+
+        Page<UserResponse> userPage = new PageImpl<>(
+                List.of(createSecondUserResponse()),
+                pageable,
+                2
+        );
+
+        when(userService.getAllUsers(any(Pageable.class)))
+                .thenReturn(userPage);
+
+        mockMvc.perform(get("/api/users")
+                        .param("page", "1")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(2))
+                .andExpect(jsonPath("$.content[0].name").value("Second User"))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.first").value(false))
+                .andExpect(jsonPath("$.last").value(true));
+
+        verify(userService).getAllUsers(any(Pageable.class));
+    }
 
     // --------------------------------------------------
     // GET /api/users/{id}
@@ -166,7 +284,6 @@ class UserControllerTest {
 
         verify(userService).getUserById(1L);
     }
-
 
     // --------------------------------------------------
     // PATCH /api/users/{id}
@@ -207,7 +324,6 @@ class UserControllerTest {
         );
     }
 
-
     // --------------------------------------------------
     // DELETE /api/users/{id}
     // --------------------------------------------------
@@ -223,5 +339,4 @@ class UserControllerTest {
 
         verify(userService).deleteUser(1L);
     }
-
 }

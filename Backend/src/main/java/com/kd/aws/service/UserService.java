@@ -12,6 +12,8 @@ import com.kd.aws.repository.DepartmentRepository;
 import com.kd.aws.repository.RoleRepository;
 import com.kd.aws.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -55,12 +57,10 @@ public class UserService {
         return userMapper.toResponse(user);
     }
 
-    public List<UserResponse> getAllUsers() {
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
 
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toResponse)
-                .toList();
+        return userRepository.findAll(pageable)
+                .map(userMapper::toResponse);
     }
 
     public UserResponse getUserById(Long id) {

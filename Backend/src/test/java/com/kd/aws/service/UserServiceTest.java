@@ -21,6 +21,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -177,8 +182,12 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
     }
 
+    // --------------------------------------------------
+    // GET ALL USERS - PAGINATION AND SORTING
+    // --------------------------------------------------
+
     @Test
-    void getAllUsers_ShouldReturnAllUsers() {
+    void getAllUsers_ShouldReturnPaginatedUsers() {
 
         User secondUser = new User();
         secondUser.setId(2L);
@@ -189,8 +198,16 @@ class UserServiceTest {
                 .name("Alice")
                 .build();
 
-        when(userRepository.findAll())
-                .thenReturn(List.of(user, secondUser));
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<User> userPage = new PageImpl<>(
+                List.of(user, secondUser),
+                pageable,
+                2
+        );
+
+        when(userRepository.findAll(pageable))
+                .thenReturn(userPage);
 
         when(userMapper.toResponse(user))
                 .thenReturn(userResponse);
@@ -198,31 +215,113 @@ class UserServiceTest {
         when(userMapper.toResponse(secondUser))
                 .thenReturn(secondResponse);
 
-        List<UserResponse> result = userService.getAllUsers();
+        Page<UserResponse> result = userService.getAllUsers(pageable);
 
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("John", result.get(0).getName());
-        assertEquals("Alice", result.get(1).getName());
+        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(0, result.getNumber());
+        assertEquals(10, result.getSize());
 
-        verify(userRepository).findAll();
+        assertEquals("John", result.getContent().get(0).getName());
+        assertEquals("Alice", result.getContent().get(1).getName());
+
+        verify(userRepository).findAll(pageable);
         verify(userMapper, times(2)).toResponse(any(User.class));
     }
 
     @Test
-    void getAllUsers_ShouldReturnEmptyList_WhenNoUsersExist() {
+    void getAllUsers_ShouldReturnEmptyPage_WhenNoUsersExist() {
 
-        when(userRepository.findAll())
-                .thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
 
-        List<UserResponse> result = userService.getAllUsers();
+        Page<User> emptyPage = Page.empty(pageable);
+
+        when(userRepository.findAll(pageable))
+                .thenReturn(emptyPage);
+
+        Page<UserResponse> result = userService.getAllUsers(pageable);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
+        assertEquals(0, result.getTotalPages());
 
-        verify(userRepository).findAll();
+        verify(userRepository).findAll(pageable);
         verify(userMapper, never()).toResponse(any());
     }
+
+    @Test
+    void getAllUsers_ShouldSupportSorting() {
+
+        Pageable pageable = PageRequest.of(
+                0,
+                10,
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<User> userPage = new PageImpl<>(
+                List.of(user),
+                pageable,
+                1
+        );
+
+        when(userRepository.findAll(pageable))
+                .thenReturn(userPage);
+
+        when(userMapper.toResponse(user))
+                .thenReturn(userResponse);
+
+        Page<UserResponse> result = userService.getAllUsers(pageable);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertTrue(result.getSort().getOrderFor("id").isDescending());
+
+        verify(userRepository).findAll(pageable);
+        verify(userMapper).toResponse(user);
+    }
+
+    @Test
+    void getAllUsers_ShouldReturnRequestedPage() {
+
+        Pageable pageable = PageRequest.of(1, 1);
+
+        User secondUser = new User();
+        secondUser.setId(2L);
+        secondUser.setName("Alice");
+
+        UserResponse secondResponse = UserResponse.builder()
+                .id(2L)
+                .name("Alice")
+                .build();
+
+        Page<User> userPage = new PageImpl<>(
+                List.of(secondUser),
+                pageable,
+                2
+        );
+
+        when(userRepository.findAll(pageable))
+                .thenReturn(userPage);
+
+        when(userMapper.toResponse(secondUser))
+                .thenReturn(secondResponse);
+
+        Page<UserResponse> result = userService.getAllUsers(pageable);
+
+        assertEquals(1, result.getNumber());
+        assertEquals(1, result.getSize());
+        assertEquals(2, result.getTotalElements());
+        assertEquals("Alice", result.getContent().get(0).getName());
+
+        verify(userRepository).findAll(pageable);
+    }
+
+    // --------------------------------------------------
+    // GET USER BY ID
+    // --------------------------------------------------
 
     @Test
     void getUserById_ShouldReturnUser_WhenUserExists() {
@@ -261,6 +360,10 @@ class UserServiceTest {
 
         verify(userMapper, never()).toResponse(any());
     }
+
+    // --------------------------------------------------
+    // UPDATE USER
+    // --------------------------------------------------
 
     @Test
     void updateUser_ShouldReturnUpdatedUser_WhenUserExists() {
@@ -391,6 +494,10 @@ class UserServiceTest {
 
         verify(userRepository, never()).save(any());
     }
+
+    // --------------------------------------------------
+    // DELETE USER
+    // --------------------------------------------------
 
     @Test
     void deleteUser_ShouldDeleteUser_WhenUserExists() {
