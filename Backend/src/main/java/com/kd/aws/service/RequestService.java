@@ -183,9 +183,6 @@ public class RequestService {
         if(requestDTO.getTitle() != null){
             request.setTitle(requestDTO.getTitle());
         }
-        if(requestDTO.getRequestedBy() != null){
-            request.setRequestedBy(requestDTO.getRequestedBy());
-        }
         if(requestDTO.getDescription() != null){
             request.setDescription(requestDTO.getDescription());
         }
