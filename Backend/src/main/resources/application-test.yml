@@ -1,0 +1,13 @@
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/aws_test
+    username: root
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+jwt:
+  secret: test-secret-key-for-jwt-testing-12345678901234567890

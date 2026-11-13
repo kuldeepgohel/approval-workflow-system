@@ -228,8 +228,8 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
     ) {
         Set<Integer> levels = new HashSet<>();
 
-        for(WorkflowStepRequest step: steps){
 //            Duplicate level check
+        for(WorkflowStepRequest step: steps){
             if(!levels.add(step.getLevel())){
                 throw new IllegalArgumentException(
                         "Duplicate workflow level: "
@@ -238,7 +238,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
             }
         }
 //      Check levels are sequential starting from 1
-        for (int i = 1; i < steps.size(); i++) {
+        for (int i = 1; i <= steps.size(); i++) {
             if(!levels.contains(i)){
                 throw new IllegalArgumentException(
                         "Workflow levels must be sequential starting from 1"
