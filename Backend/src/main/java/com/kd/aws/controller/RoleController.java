@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class RoleController {
 
     private final RoleService roleService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<RoleResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request){
@@ -41,6 +43,7 @@ public class RoleController {
         return ResponseEntity.ok(roleService.getRoleById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<RoleResponse> updateRole(
             @PathVariable Long id, @Valid @RequestBody UpdateRoleRequest request){
@@ -48,6 +51,7 @@ public class RoleController {
                 roleService.updateRole(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRole(
             @PathVariable Long id) {

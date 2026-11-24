@@ -3,6 +3,7 @@ package com.kd.aws.service;
 import com.kd.aws.dto.login.LoginRequestDTO;
 import com.kd.aws.dto.login.LoginResponseDTO;
 import com.kd.aws.entity.User;
+import com.kd.aws.exception.ResourceNotFoundException;
 import com.kd.aws.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,7 +38,7 @@ public class AuthService {
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(()->
-                        new RuntimeException("User not found.")
+                        new ResourceNotFoundException("User not found.")
                 );
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
