@@ -7,6 +7,7 @@ import com.kd.aws.service.ApprovalWorkflowService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class ApprovalWorkflowController {
     /**
      * Create a new approval workflow
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApprovalWorkflowResponse> createWorkFlow(
             @Valid @RequestBody CreateApprovalWorkflowRequest request
@@ -55,6 +57,7 @@ public class ApprovalWorkflowController {
     /**
      * Update an existing approval workflow
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApprovalWorkflowResponse> updateWorkflow (
             @PathVariable Long id,
@@ -69,6 +72,7 @@ public class ApprovalWorkflowController {
     /**
      * Delete approval workflow
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWorkflow(
             @PathVariable Long id

@@ -41,6 +41,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id, @RequestBody UpdateUserRequest request){
@@ -48,7 +49,7 @@ public class UserController {
                 userService.updateUser(id, request)
         );
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id){
         userService.deleteUser(id);

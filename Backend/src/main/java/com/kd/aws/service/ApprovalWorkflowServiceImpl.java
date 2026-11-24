@@ -8,14 +8,13 @@ import com.kd.aws.entity.ApprovalWorkflow;
 import com.kd.aws.entity.Department;
 import com.kd.aws.entity.Role;
 import com.kd.aws.entity.WorkflowStep;
+import com.kd.aws.exception.ResourceNotFoundException;
 import com.kd.aws.mapper.ApprovalWorkflowMapper;
 import com.kd.aws.repository.ApprovalWorkflowRepository;
 import com.kd.aws.repository.DepartmentRepository;
 import com.kd.aws.repository.RoleRepository;
 import com.kd.aws.repository.WorkflowStepRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -57,7 +56,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
         Department department = departmentRepository.findById(
                 request.getDepartmentId()
         ).orElseThrow(() ->
-                new EntityNotFoundException(
+                new ResourceNotFoundException(
                         "Department not found with id:"
                          + request.getDepartmentId()
                 )
@@ -88,7 +87,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
             Role role = roleRepository.findById(
                     stepRequest.getRoleId()
             ).orElseThrow(() ->
-                    new EntityNotFoundException(
+                    new ResourceNotFoundException(
                             "Role not found with id:"
                             + stepRequest.getRoleId()
                     )
@@ -135,7 +134,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
     public ApprovalWorkflowResponse getWorkflowById(Long id) {
         ApprovalWorkflow workflow = approvalWorkflowRepository.findById(id)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
+                        new ResourceNotFoundException(
                                 "Approval workflow not found with id:"
                                 + id
                         ));
@@ -159,7 +158,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
 //        2.Find existing workflow
         ApprovalWorkflow workflow = approvalWorkflowRepository.findById(id)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
+                        new ResourceNotFoundException(
                                 "Approval workflow not found with id:"
                                 + id
                         )
@@ -178,7 +177,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
             Role role = roleRepository.findById(
                     stepRequest.getRoleId()
             ).orElseThrow(() ->
-                    new EntityNotFoundException(
+                    new ResourceNotFoundException(
                             "Role not found with id: "
                                     + stepRequest.getRoleId()
                     )
@@ -209,7 +208,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService{
         ApprovalWorkflow workflow =
                 approvalWorkflowRepository.findById(id)
                         .orElseThrow(() ->
-                                new EntityNotFoundException(
+                                new ResourceNotFoundException(
                                         "Approval WorkFlow not found with id"
                                         + id
                                 )

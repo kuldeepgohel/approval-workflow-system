@@ -13,6 +13,7 @@ import com.kd.aws.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -147,7 +148,7 @@ public class RequestService {
         try {
             validateApproverRole(user, currentStep, request);
         } catch (IllegalStateException ex) {
-            throw new org.springframework.security.access.AccessDeniedException(
+            throw new AccessDeniedException(
                     "You are not authorized to view this request."
             );
         }
@@ -176,7 +177,7 @@ public class RequestService {
         String currentUserEmail = authentication.getName();
 
         if(!request.getRequestedBy().equalsIgnoreCase(currentUserEmail)) {
-            throw new org.springframework.security.access.AccessDeniedException(
+            throw new AccessDeniedException(
                     "You are not allowed to update this request."
             );
         }
@@ -232,7 +233,7 @@ public class RequestService {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        Request request = requestRepository.findById(requestId)
+        Request request = requestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: "+ requestId));
         if (request.getStatus() != RequestStatus.PENDING){
             throw new IllegalStateException(
@@ -295,7 +296,7 @@ public class RequestService {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        Request request = requestRepository.findById(requestId)
+        Request request = requestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found with id: "+ requestId));
         if (request.getStatus() != RequestStatus.PENDING){
             throw new IllegalStateException(
@@ -370,7 +371,7 @@ public class RequestService {
                 try {
                     validateApproverRole(user, currentStep, request);
                 } catch (IllegalStateException ex) {
-                    throw new org.springframework.security.access.AccessDeniedException(
+                    throw new AccessDeniedException(
                             "You are not authorized to view this approval history."
                     );
                 }
